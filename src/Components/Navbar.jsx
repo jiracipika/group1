@@ -1,5 +1,6 @@
 import React from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../utils/supabaseClient'
 import { 
   homeSvgSrc, 
   collectionSvgSrc, 
@@ -14,6 +15,13 @@ import {
 
 
 const Navbar = () => {
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/signin')
+  }
+
   return (
     <nav className='text-white py-10 px-4 min-h-screen flex flex-col justify-between z-10 fixed top-0 max-h-full w-[266px] bg-[#0B0C14]'>
       <div className='flex flex-col w-full gap-8 '>
@@ -31,7 +39,7 @@ const Navbar = () => {
       </div>
 
 
-      <NavLink to={"/signin"}className="px-4 py-2.5 gap-2 flex items-center text-[18px]"> <img src={logoutSvgSrc} alt='Exit-icon' /> Log Out</NavLink>
+      <button onClick={handleLogout} className="px-4 py-2.5 gap-2 flex items-center text-[18px] w-full"> <img src={logoutSvgSrc} alt='Exit-icon' /> Log Out</button>
     </nav>
   )
 }

@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react'
 import { Link, useNavigate  } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { setAuth } from '../features/auth/authSlice'
-import axios from '../utils/axios'
+import { supabase } from '../utils/supabaseClient'
 
 const SignIn = () => {
 
@@ -19,30 +19,21 @@ const SignIn = () => {
         }
 
         try {
-            const response = await axios.post(
-                'auth/login', 
-                {
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
-                password: pass,
-                },
-                {
-                    withCredentials: true, // ✅ Sends cookies with the request
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-,);
+                password: pass
+            })
 
-                console.log(response)
+            if (error) throw error
 
-                const accessToken = response.data.accessToken
-                const refreshToken = response.data.refreshToken
+            const accessToken = data.session?.access_token
+            const refreshToken = data.session?.refresh_token
 
-            dispatch(setAuth({accessToken,refreshToken}))
-            navigate("/")
-        } catch (error){
-            console.error('Error during login:', error.response ? error.response.data : error.message);
-            alert('Login failed. Please try again.');
+            dispatch(setAuth({ accessToken, refreshToken }))
+            navigate('/')
+        } catch (error) {
+            console.error('Error during login:', error.message)
+            alert('Login failed. Please try again.')
         }
     }
 
