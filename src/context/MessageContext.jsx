@@ -1,4 +1,6 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { supabase } from '../utils/supabaseClient';
+import socket from '../utils/socket';
 
 const MessageContext = createContext();
 
@@ -7,8 +9,39 @@ export const MessageProvider = ({ children }) => {
   const [currentChat, setCurrentChat] = useState(null);
   const [chats, setChats] = useState([]);
 
-  const addMessage = (message) => {
-    setMessages(prev => [...prev, message]);
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!currentChat) return;
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('chatId', currentChat.id)
+        .order('created_at', { ascending: true });
+      if (!error) {
+        setMessages(data);
+      }
+    };
+
+    fetchMessages();
+  }, [currentChat]);
+
+  useEffect(() => {
+    const onMessage = (message) => {
+      if (message.chatId === currentChat?.id) {
+        setMessages((prev) => [...prev, message]);
+      }
+    };
+
+    socket.on('new-message', onMessage);
+    return () => {
+      socket.off('new-message', onMessage);
+    };
+  }, [currentChat]);
+
+  const addMessage = async (message) => {
+    setMessages((prev) => [...prev, message]);
+    await supabase.from('messages').insert([message]);
+    socket.emit('new-message', message);
   };
 
   const addFile = async (file) => {
@@ -32,7 +65,7 @@ export const MessageProvider = ({ children }) => {
         chatId: currentChat?.id
       };
 
-      addMessage(message);
+      await addMessage(message);
       return message;
     } catch (error) {
       console.error('Error adding file:', error);

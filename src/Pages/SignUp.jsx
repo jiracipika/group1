@@ -1,9 +1,9 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import validator from "validator"
-import axios from 'axios'
+import validator from 'validator'
+import { supabase } from '../utils/supabaseClient'
 
-const signUp = () => {
+const SignUp = () => {
 
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
@@ -89,7 +89,7 @@ const signUp = () => {
         }
     }
 
-    const registerClick = () => {
+    const registerClick = async () => {
 
         if (confirmName() == false || validateEmail() == false || confirmPasswords() == false) {
             console.log("Form validation Failed");
@@ -97,17 +97,20 @@ const signUp = () => {
         }
     
         try {
-            const response = axios.post('https://6ecc-72-138-28-18.ngrok-free.app/api/auth/register', {
-                name: name,
+            const { data, error } = await supabase.auth.signUp({
                 email: email,
                 password: pass,
-            });
-    
-            console.log('Registration successful:', response.data);
-            alert('Registration successful!');
+                options: {
+                    data: { name }
+                }
+            })
+
+            if (error) throw error
+            console.log('Registration successful:', data)
+            alert('Registration successful!')
         } catch (error) {
-            console.error('Error during registration:', error.response ? error.response.data : error.message);
-            alert('Registration failed. Please try again.');
+            console.error('Error during registration:', error.message)
+            alert('Registration failed. Please try again.')
         }
     }
 
@@ -148,4 +151,4 @@ const signUp = () => {
     )
 }
 
-export default signUp
+export default SignUp
